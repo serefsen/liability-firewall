@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Liability Firewall — Forensic Evidence Infrastructure for Regulated AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #0a0a0f;
+  --bg-secondary: #111118;
+  --bg-card: #16161f;
+  --bg-terminal: #0d0d14;
+  --border: #1e1e2e;
+  --border-glow: #2a2a3e;
+  --text-primary: #e8e8ed;
+  --text-secondary: #8888a0;
+  --text-muted: #55556a;
+  --accent-green: #00e5a0;
+  --accent-green-dim: rgba(0,229,160,0.15);
+  --accent-red: #ff4060;
+  --accent-red-dim: rgba(255,64,96,0.12);
+  --accent-blue: #4488ff;
+  --accent-amber: #ffaa00;
+  --accent-amber-dim: rgba(255,170,0,0.12);
+  --font-display: 'Outfit', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-display);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.glow-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  backdrop-filter: blur(20px);
+  background: rgba(10,10,15,0.8);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-logo {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--accent-green);
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nav-logo .logo-icon {
+  width: 28px; height: 28px;
+  border: 2px solid var(--accent-green);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+}
+
+.nav-links { display: flex; gap: 2rem; align-items: center; }
+.nav-links a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 400;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--text-primary); }
+
+.btn-nav {
+  background: var(--accent-green);
+  color: var(--bg-primary);
+  padding: 0.6rem 1.4rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+.btn-nav:hover {
+  box-shadow: 0 0 24px rgba(0,229,160,0.3);
+  transform: translateY(-1px);
+}
+
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 8rem 2rem 4rem;
+  overflow: hidden;
+}
+
+.hero .glow-orb-1 {
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(0,229,160,0.08), transparent 70%);
+  top: -200px; left: 50%;
+  transform: translateX(-50%);
+}
+
+.hero .glow-orb-2 {
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(68,136,255,0.06), transparent 70%);
+  bottom: 10%; right: -100px;
+}
+
+.hero-badge { 
+  display: inline-flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.75rem 2.2rem;
+  border: 1.5px solid rgba(0,229,160,0.4);
+  border-radius: 100px;
+  font-size: 1.1rem;
+  color: #fff;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  margin-bottom: 2.5rem;
+  background: linear-gradient(135deg, rgba(0,229,160,0.18), rgba(0,180,210,0.12), rgba(68,136,255,0.15));
+  animation: fadeInDown 0.6s ease-out, badgeGlow 3s ease-in-out infinite;
+  letter-spacing: 2px;
+  text-shadow: 0 0 30px rgba(0,229,160,0.5), 0 0 60px rgba(0,229,160,0.2);
+  box-shadow: 0 0 30px rgba(0,229,160,0.12), 0 0 60px rgba(0,229,160,0.05), inset 0 0 20px rgba(0,229,160,0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-badge::after {
+  content: '';
+  position: absolute;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.07) 50%, transparent 60%);
+  animation: shimmer 4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes badgeGlow {
+  0%, 100% { box-shadow: 0 0 30px rgba(0,229,160,0.12), 0 0 60px rgba(0,229,160,0.05); border-color: rgba(0,229,160,0.4); }
+  50% { box-shadow: 0 0 45px rgba(0,229,160,0.22), 0 0 90px rgba(0,229,160,0.08); border-color: rgba(0,229,160,0.6); }
+}
+
+.hero-badge::before {
+  content: '';
+  width: 10px; height: 10px;
+  background: var(--accent-green);
+  border-radius: 50%;
+  box-shadow: 0 0 16px rgba(0,229,160,0.9), 0 0 30px rgba(0,229,160,0.5);
+  animation: pulse 2s infinite;
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 16px rgba(0,229,160,0.9), 0 0 30px rgba(0,229,160,0.5); transform: scale(1); }
+  50% { opacity: 0.5; box-shadow: 0 0 6px rgba(0,229,160,0.3); transform: scale(0.85); }
+}
+
+.hero h1 {
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -2px;
+  max-width: 900px;
+  margin-bottom: 1.5rem;
+  animation: fadeInUp 0.7s ease-out;
+}
+
+.hero h1 .highlight {
+  background: linear-gradient(135deg, var(--accent-green), var(--accent-blue));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-sub {
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+  max-width: 600px;
+  line-height: 1.7;
+  margin-bottom: 2.5rem;
+  font-weight: 300;
+  animation: fadeInUp 0.8s ease-out;
+}
+
+.hero-ctas {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  animation: fadeInUp 0.9s ease-out;
+}
+
+.btn-primary {
+  background: var(--accent-green);
+  color: var(--bg-primary);
+  padding: 0.9rem 2rem;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 1rem;
+  text-decoration: none;
+  transition: all 0.25s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: none;
+  cursor: pointer;
+}
+.btn-primary:hover {
+  box-shadow: 0 0 40px rgba(0,229,160,0.3);
+  transform: translateY(-2px);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text-primary);
+  padding: 0.9rem 2rem;
+  border-radius: 10px;
+  font-weight: 500;
+  font-size: 1rem;
+  text-decoration: none;
+  transition: all 0.25s;
+  border: 1px solid var(--border-glow);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+.btn-secondary:hover {
+  border-color: var(--text-secondary);
+  background: rgba(255,255,255,0.03);
+}
+
+section { padding: 6rem 2rem; position: relative; }
+.container { max-width: 1100px; margin: 0 auto; }
+
+.section-label {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--accent-green);
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  margin-bottom: 1rem;
+}
+
+.section-title {
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 700;
+  letter-spacing: -1px;
+  margin-bottom: 1rem;
+  line-height: 1.2;
+}
+
+.section-desc {
+  font-size: 1.05rem;
+  color: var(--text-secondary);
+  max-width: 600px;
+  line-height: 1.7;
+  font-weight: 300;
+}
+
+.problem {
+  border-top: 1px solid var(--border);
+  background: var(--bg-secondary);
+}
+
+.problem-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  margin-top: 3rem;
+  align-items: center;
+}
+
+.problem-text h3 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+.problem-text p {
+  color: var(--text-secondary);
+  line-height: 1.8;
+  font-weight: 300;
+}
+
+.problem-terminal {
+  background: var(--bg-terminal);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+}
+
+.terminal-bar {
+  background: var(--bg-card);
+  padding: 0.6rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.terminal-dot { width: 10px; height: 10px; border-radius: 50%; }
+.terminal-dot.r { background: #ff5f57; }
+.terminal-dot.y { background: #febc2e; }
+.terminal-dot.g { background: #28c840; }
+
+.terminal-body {
+  padding: 1.2rem;
+  line-height: 1.8;
+  overflow-x: auto;
+}
+
+.t-prompt { color: var(--accent-green); }
+.t-cmd { color: var(--text-primary); }
+.t-key { color: var(--accent-blue); }
+.t-string { color: var(--accent-green); }
+.t-bool-true { color: var(--accent-green); }
+.t-bool-false { color: var(--accent-red); }
+.t-number { color: var(--accent-amber); }
+.t-comment { color: var(--text-muted); font-style: italic; }
+
+.demo { border-top: 1px solid var(--border); }
+
+.demo-steps {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  margin-top: 3rem;
+}
+
+.demo-step {
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.step-num {
+  width: 48px; height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.step-num.pass { background: var(--accent-green-dim); color: var(--accent-green); border: 1px solid rgba(0,229,160,0.2); }
+.step-num.block { background: var(--accent-red-dim); color: var(--accent-red); border: 1px solid rgba(255,64,96,0.2); }
+.step-num.verify { background: rgba(68,136,255,0.12); color: var(--accent-blue); border: 1px solid rgba(68,136,255,0.2); }
+.step-num.proof { background: rgba(136,68,255,0.12); color: #8844ff; border: 1px solid rgba(136,68,255,0.2); }
+.step-num.tamper { background: var(--accent-amber-dim); color: var(--accent-amber); border: 1px solid rgba(255,170,0,0.2); }
+
+.step-content h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+
+.step-content p {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  font-weight: 300;
+  margin-bottom: 0.8rem;
+}
+
+.step-terminal {
+  background: var(--bg-terminal);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem 1.2rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  line-height: 1.7;
+  overflow-x: auto;
+}
+
+.diff { border-top: 1px solid var(--border); background: var(--bg-secondary); }
+
+.diff-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-top: 3rem;
+}
+
+.diff-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 2rem;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.diff-card:hover {
+  border-color: var(--border-glow);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+}
+
+.diff-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+}
+
+.diff-card:nth-child(1)::before { background: linear-gradient(90deg, var(--accent-green), transparent); }
+.diff-card:nth-child(2)::before { background: linear-gradient(90deg, var(--accent-blue), transparent); }
+.diff-card:nth-child(3)::before { background: linear-gradient(90deg, var(--accent-amber), transparent); }
+
+.diff-icon {
+  width: 44px; height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.2rem;
+  font-size: 1.3rem;
+}
+
+.diff-card:nth-child(1) .diff-icon { background: var(--accent-green-dim); }
+.diff-card:nth-child(2) .diff-icon { background: rgba(68,136,255,0.12); }
+.diff-card:nth-child(3) .diff-icon { background: var(--accent-amber-dim); }
+
+.diff-card h4 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 0.6rem;
+  letter-spacing: -0.3px;
+}
+
+.diff-vs {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 0.8rem;
+  padding: 0.3rem 0.6rem;
+  background: rgba(255,255,255,0.03);
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.diff-card p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  font-weight: 300;
+}
+
+.compliance { border-top: 1px solid var(--border); }
+
+.compliance-badges {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-top: 3rem;
+}
+
+.badge-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: all 0.3s;
+}
+
+.badge-card:hover { border-color: var(--border-glow); }
+
+.badge-card .badge-name {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent-green);
+  margin-bottom: 0.6rem;
+}
+
+.badge-card p {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  font-weight: 300;
+}
+
+.cta-section {
+  border-top: 1px solid var(--border);
+  background: var(--bg-secondary);
+  text-align: center;
+  padding: 6rem 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-section .glow-orb {
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(0,229,160,0.06), transparent 70%);
+  top: -200px; left: 50%;
+  transform: translateX(-50%);
+}
+
+.cta-section h2 {
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
+  font-weight: 700;
+  letter-spacing: -1px;
+  margin-bottom: 1rem;
+}
+
+.cta-section p {
+  color: var(--text-secondary);
+  font-size: 1.05rem;
+  max-width: 500px;
+  margin: 0 auto 2rem;
+  font-weight: 300;
+}
+
+.cta-form {
+  display: flex;
+  gap: 0.8rem;
+  max-width: 500px;
+  margin: 0 auto;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.cta-form input {
+  flex: 1;
+  min-width: 200px;
+  padding: 0.9rem 1.2rem;
+  background: var(--bg-terminal);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.cta-form input:focus { border-color: var(--accent-green); }
+.cta-form input::placeholder { color: var(--text-muted); }
+
+footer {
+  border-top: 1px solid var(--border);
+  padding: 2.5rem 2rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: all 0.6s ease-out;
+}
+
+.fade-in.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+  .problem-grid { grid-template-columns: 1fr; }
+  .diff-grid { grid-template-columns: 1fr; }
+  .compliance-badges { grid-template-columns: 1fr; }
+  .nav-links { display: none; }
+  .demo-step { grid-template-columns: 1fr; }
+  .step-num { width: 40px; height: 40px; font-size: 0.9rem; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">
+    <div class="logo-icon">&#x26CA;</div>
+    LIABILITY FIREWALL
+  </div>
+  <div class="nav-links">
+    <a href="#how-it-works">How It Works</a>
+    <a href="#differentiators">Why Us</a>
+    <a href="#compliance">Compliance</a>
+    <a href="#contact" class="btn-nav">Request Demo</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="glow-orb glow-orb-1"></div>
+  <div class="glow-orb glow-orb-2"></div>
+
+  <div class="hero-badge">LIABILITY FIREWALL FOR REGULATED AI</div>
+
+  <h1>Can you prove your AI<br>decision was <span class="highlight">right?</span></h1>
+
+  <p class="hero-sub">
+    We make sure you can. Every AI deployment decision generates a
+    cryptographic proof chain &mdash; deterministic, independently verifiable,
+    built for legal scrutiny.
+  </p>
+
+  <div class="hero-ctas">
+    <a href="#contact" class="btn-primary">Request a Demo &rarr;</a>
+    <a href="#how-it-works" class="btn-secondary">See How It Works</a>
+  </div>
+</section>
+
+<section class="problem">
+  <div class="container">
+    <div class="section-label fade-in">The Problem</div>
+    <h2 class="section-title fade-in">Your AI made a decision.<br>The regulator asks: <em>prove it.</em></h2>
+    <p class="section-desc fade-in">
+      Existing tools monitor AI performance. None produce the forensic evidence
+      you need when an auditor, a regulator, or a court comes knocking.
+    </p>
+
+    <div class="problem-grid fade-in">
+      <div class="problem-text">
+        <h3>Monitoring tools show you dashboards.<br>We produce cryptographic proof.</h3>
+        <p>
+          Every evaluation passes through a deterministic CI&times;RE matrix &mdash; no LLM,
+          no probabilistic variance. The result is a hash-chained manifest with
+          Merkle inclusion proofs that anyone can independently verify.
+          If a single byte of evidence is altered, the chain breaks.
+        </p>
+      </div>
+      <div class="problem-terminal">
+        <div class="terminal-bar">
+          <span class="terminal-dot r"></span>
+          <span class="terminal-dot y"></span>
+          <span class="terminal-dot g"></span>
+        </div>
+        <div class="terminal-body">
+          <span class="t-comment">// Tampered evidence &rarr; instantly detected</span><br>
+          <span class="t-prompt">$</span> <span class="t-cmd">curl /v1/jobs/demo_danger/verify</span><br><br>
+          {<br>
+          &nbsp;&nbsp;<span class="t-key">"verified"</span>: <span class="t-bool-false">false</span>,<br>
+          &nbsp;&nbsp;<span class="t-key">"reason"</span>: <span class="t-string">"LEAF_HASH_MISMATCH:segment=seg_002"</span>,<br>
+          &nbsp;&nbsp;<span class="t-key">"layer"</span>: <span class="t-string">"MANIFEST"</span><br>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="demo" id="how-it-works">
+  <div class="container">
+    <div class="section-label fade-in">How It Works</div>
+    <h2 class="section-title fade-in">Five endpoints. Complete evidence chain.</h2>
+    <p class="section-desc fade-in">From evaluation to cryptographic proof &mdash; in milliseconds.</p>
+
+    <div class="demo-steps">
+      <div class="demo-step fade-in">
+        <div class="step-num pass">01</div>
+        <div class="step-content">
+          <h4>Safe deployment &rarr; PASS</h4>
+          <p>Low-risk AI deployment. Deterministic engine evaluates and approves with full evidence trail.</p>
+          <div class="step-terminal">
+            <span class="t-key">"status"</span>: <span class="t-string">"PASS"</span>, <span class="t-key">"ciLevel"</span>: <span class="t-number">1</span>, <span class="t-key">"reLevel"</span>: <span class="t-number">2</span>,<br>
+            <span class="t-key">"fatalPairTriggered"</span>: <span class="t-bool-false">false</span>, <span class="t-key">"processingTimeMs"</span>: <span class="t-number">3</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-step fade-in">
+        <div class="step-num block">02</div>
+        <div class="step-content">
+          <h4>Dangerous deployment &rarr; BLOCK</h4>
+          <p>High-risk medical AI scenario. Fatal pair triggered, escalation required. Deployment blocked.</p>
+          <div class="step-terminal">
+            <span class="t-key">"status"</span>: <span class="t-bool-false">"BLOCK"</span>, <span class="t-key">"ciLevel"</span>: <span class="t-number">4</span>, <span class="t-key">"reLevel"</span>: <span class="t-number">4</span>,<br>
+            <span class="t-key">"fatalPairTriggered"</span>: <span class="t-bool-true">true</span>, <span class="t-key">"escalateTriggered"</span>: <span class="t-bool-true">true</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-step fade-in">
+        <div class="step-num verify">03</div>
+        <div class="step-content">
+          <h4>Full chain verification</h4>
+          <p>Independent verification: leaf hashes, Merkle root, manifest hash &mdash; all recomputed and validated.</p>
+          <div class="step-terminal">
+            <span class="t-key">"verified"</span>: <span class="t-bool-true">true</span>,<br>
+            <span class="t-key">"manifest_sha256"</span>: <span class="t-string">"f2bcd418...bb11"</span>,<br>
+            <span class="t-key">"merkle_root"</span>: <span class="t-string">"sha256:5545c3d0...4da7"</span>,<br>
+            <span class="t-key">"segment_count"</span>: <span class="t-number">3</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-step fade-in">
+        <div class="step-num proof">04</div>
+        <div class="step-content">
+          <h4>Segment inclusion proof</h4>
+          <p>Cryptographic proof that a specific segment is included in the Merkle tree. Independently verifiable.</p>
+          <div class="step-terminal">
+            <span class="t-key">"verified"</span>: <span class="t-bool-true">true</span>, <span class="t-key">"segment_id"</span>: <span class="t-string">"seg_002"</span>,<br>
+            <span class="t-key">"proof_path"</span>: [<br>
+            &nbsp;&nbsp;{ <span class="t-key">"hash"</span>: <span class="t-string">"sha256:5f8e..."</span>, <span class="t-key">"side"</span>: <span class="t-string">"left"</span> },<br>
+            &nbsp;&nbsp;{ <span class="t-key">"hash"</span>: <span class="t-string">"sha256:4186..."</span>, <span class="t-key">"side"</span>: <span class="t-string">"right"</span> }<br>
+            ]
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-step fade-in">
+        <div class="step-num tamper">05</div>
+        <div class="step-content">
+          <h4>Tamper detection</h4>
+          <p>Evidence was modified &mdash; BLOCK changed to PASS in the manifest. System catches it instantly.</p>
+          <div class="step-terminal">
+            <span class="t-key">"verified"</span>: <span class="t-bool-false">false</span>,<br>
+            <span class="t-key">"reason"</span>: <span class="t-string">"LEAF_HASH_MISMATCH:segment=seg_002"</span>,<br>
+            <span class="t-key">"layer"</span>: <span class="t-string">"MANIFEST"</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="diff" id="differentiators">
+  <div class="container">
+    <div class="section-label fade-in">Why Liability Firewall</div>
+    <h2 class="section-title fade-in">Not another monitoring tool.</h2>
+    <p class="section-desc fade-in">We don't watch your AI. We prove your AI decisions are defensible.</p>
+
+    <div class="diff-grid fade-in">
+      <div class="diff-card">
+        <div class="diff-icon">&#x26D3;</div>
+        <h4>Evidence, Not Dashboards</h4>
+        <div class="diff-vs">vs. Credo AI, Holistic AI, Arthur AI</div>
+        <p>Competitors show you charts. We produce hash-chained cryptographic proof chains that auditors and legal counsel can independently verify.</p>
+      </div>
+      <div class="diff-card">
+        <div class="diff-icon">&#x26A1;</div>
+        <h4>Deterministic Decision Path</h4>
+        <div class="diff-vs">vs. LLM-based governance tools</div>
+        <p>No machine learning in the gate logic. CI&times;RE matrix yields the same PASS / BLOCK / ESCALATE for the same inputs &mdash; every single time.</p>
+      </div>
+      <div class="diff-card">
+        <div class="diff-icon">&#x1F6E1;</div>
+        <h4>Fail-Closed Architecture</h4>
+        <div class="diff-vs">vs. "flag and continue" tools</div>
+        <p>When data is missing, ambiguous, or the system encounters an error &mdash; deployment is blocked. We never default to PASS.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="compliance" id="compliance">
+  <div class="container">
+    <div class="section-label fade-in">Compliance</div>
+    <h2 class="section-title fade-in">Built for regulated industries.</h2>
+    <p class="section-desc fade-in">We don't certify you. We give you the evidence infrastructure to certify yourself.</p>
+
+    <div class="compliance-badges fade-in">
+      <div class="badge-card">
+        <div class="badge-name">FDA SaMD</div>
+        <p>Generates audit evidence aligned with FDA 21 CFR Part 11 documentation requirements for software as a medical device.</p>
+      </div>
+      <div class="badge-card">
+        <div class="badge-name">EU AI ACT</div>
+        <p>Produces structured audit trails supporting EU AI Act Article 17 technical documentation obligations.</p>
+      </div>
+      <div class="badge-card">
+        <div class="badge-name">SOC2 TYPE II</div>
+        <p>Cryptographic controls designed for SOC2 Type II audit readiness with tamper-evident evidence chains.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cta-section" id="contact">
+  <div class="glow-orb"></div>
+  <div class="container" style="position:relative; z-index:1;">
+    <div class="section-label fade-in">Get Started</div>
+    <h2 class="fade-in">See it in action.</h2>
+    <p class="fade-in">Request a live forensic demo. We'll evaluate your AI deployment scenario and show you the complete evidence chain.</p>
+    <div class="cta-form fade-in">
+      <input type="email" placeholder="Your work email" />
+      <button class="btn-primary" type="button">Request Demo &rarr;</button>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>&copy; 2026 Liability Firewall. Forensic-grade evidence infrastructure for regulated AI.</p>
+</footer>
+
+<script>
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) entry.target.classList.add('visible');
+  });
+}, { threshold: 0.1 });
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>
